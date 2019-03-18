@@ -1,0 +1,642 @@
+#include<opencv2/opencv.hpp>
+#include<opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include<math.h>
+#include<stdio.h>
+#include<iostream>
+#include<vector>
+#define M_PI 3.14159265358979323846
+using namespace cv;
+using namespace std;
+
+//5
+/*float getT(int *color,float T)
+{
+	int sum1 = 0, sum2 = 0;
+	float mean1, mean2;
+	float T1;
+	for (int i = 0; i < T; i++)
+	{
+		sum1 = sum1 + color[i];
+	}
+	for (int i = T; i < 256; i++)
+	{
+		sum2 = sum2 + color[i];
+	}
+	mean1 = sum1 / T;
+	mean2 = sum2 / T;
+	T1 = (mean1 + mean2) / 2;
+	return T1;
+}
+
+int main()
+{
+	Mat src1 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain.bmp", IMREAD_GRAYSCALE);
+	Mat src2 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\woman.Bmp", IMREAD_GRAYSCALE);
+	Mat dst1(src1.rows, src1.cols, CV_8UC1, Scalar(0, 0, 0));
+	Mat dst2(src2.rows, src2.cols, CV_8UC1, Scalar(0, 0, 0));
+	int color1[256];
+	int color2[256];
+	float  T1=0,T2=128;
+	float threshold = 0.01;
+	for (int i = 0; i < src1.rows; i++)
+	{
+		for (int j = 0; j < src1.cols; j++)
+		{
+			color1[int(src1.at<uchar>(i, j))]++;
+		}
+	}
+	for (int i = 0; i < src2.rows; i++)
+	{
+		for (int j = 0; j < src2.cols; j++)
+		{
+			color2[int(src2.at<uchar>(i, j))]++;
+		}
+	}
+	while (abs(T2 - T1) < threshold )
+	{
+		T1 = T2;
+		T2 = getT(color1, T1);
+	}
+	for (int i = 0; i < src1.rows; i++)
+	{
+		for (int j = 0; j < src1.cols; j++)
+		{
+			if (int(src1.at<uchar>(i, j)) >= T2)dst1.at<uchar>(i, j) = 255;
+			else dst1.at<uchar>(i, j) = 0;
+		}
+	}
+	T1 = 0; T2 = 128;
+	while (abs(T2 - T1) < threshold)
+	{
+		T1 = T2;
+		T2 = getT(color2, T1);
+	}
+	for (int i = 0; i < src2.rows; i++)
+	{
+		for (int j = 0; j < src2.cols; j++)
+		{
+			if (int(src2.at<uchar>(i, j)) >= T2)dst2.at<uchar>(i, j) = 255;
+			else dst2.at<uchar>(i, j) = 0;
+		}
+	}
+	imshow("1", dst1);
+	imshow("2", dst2);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\5\\elain.bmp", dst1);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\5\\woman.bmp", dst2);
+	waitKey();
+	return 0;
+}*/
+
+
+//4
+/*float mean(Mat src)
+{
+	int sum=0;
+	float m=0;
+	for (int i = 0; i < src.rows; i++)
+	{
+		for (int j = 0; j < src.cols; j++)
+		{
+			sum = sum + int(src.at<uchar>(i, j));
+		}
+	}
+	m = sum / (src.rows*src.cols);
+	return m;
+}
+
+float var(Mat src,int m)
+{
+	int sum=0;
+	float var=0;
+	for (int i = 0; i < src.rows; i++)
+	{
+		for (int j = 0; j < src.cols; j++)
+		{
+			sum = sum + (int(src.at<uchar>(i, j)) - m)*(int(src.at<uchar>(i, j)) - m);
+		}
+	}
+	var = sum / (src.rows*src.cols);
+	return var;
+
+}
+
+void strengthen(Mat src, Mat dst, float m, float var)
+{
+	float lm, lvar,lsum,lsum2;
+	for (int i = 0; i < dst.rows; i++)
+	{
+		for (int j = 0; j < dst.cols; j++)
+		{
+			lm = 0; lvar = 0; lsum = 0; lsum2 = 0;
+			for (int a = -3; a < 4; a++)
+			{
+				for (int b = -3; b < 4; b++)
+				{
+					lsum = lsum + int(src.at<uchar>(i + 3 + a, j + 3 + b));
+				}
+			}
+			lm = lsum / 49;
+			for (int a = -3; a < 4; a++)
+			{
+				for (int b = -3; b < 4; b++)
+				{
+					lsum2 = lsum2 + int(src.at<uchar>(i + 3 + a, j + 3 + b) - lsum)*int(src.at<uchar>(i + 3 + a, j + 3 + b) - lsum);
+				}
+			}
+			lvar = lsum2 / 49;
+			if (lm <= 0.4*m&&lvar >= 0.02*var&&lvar <= 0.4*var) dst.at<uchar>(i, j) = 4 * src.at<uchar>(i + 3, j + 3);
+			else dst.at<uchar>(i, j) = src.at<uchar>(i + 3, j + 3);
+		}
+	}
+}
+
+int main()
+{
+	Mat src1 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain.bmp", IMREAD_GRAYSCALE);
+	Mat src2 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\lena.bmp", IMREAD_GRAYSCALE);
+	Mat copy1(src1.rows + 6, src1.cols + 6, CV_8UC1, Scalar(0, 0, 0));
+	Mat copy2(src2.rows + 6, src2.cols + 6, CV_8UC1, Scalar(0, 0, 0));
+	Mat dst1(src1.rows, src1.cols, CV_8UC1, Scalar(0, 0, 0));
+	Mat dst2(src2.rows, src2.cols, CV_8UC1, Scalar(0, 0, 0));
+	float mean1, var1;
+	float mean2, var2;
+	for (int i = 3; i < copy1.rows - 3; i++)
+	{
+		for (int j = 3; j < copy1.cols - 3; j++)
+		{
+			copy1.at<uchar>(i, j) = src1.at<uchar>(i - 3, j - 3);
+			copy2.at<uchar>(i, j) = src2.at<uchar>(i - 3, j - 3);
+		}
+	}
+	mean1 = mean(src1);
+	mean2 = mean(src2);
+	var1=var(src1,mean1);
+	var2 = var(src2, mean2);
+	strengthen(copy1, dst1, mean1, var1);
+	strengthen(copy2, dst2, mean2, var2);
+	imshow("1", dst1);
+	imshow("2", dst2);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\4\\elain.bmp", dst1);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\4\\lena.bmp", dst2);
+
+	waitKey(0);
+
+}*/
+
+
+
+//3
+
+/*void countnumber(Mat &src1, int *num)
+{
+	for (int i = 0; i < src1.rows; i++)
+	{
+		for (int j = 0; j < src1.cols; j++)
+		{
+			num[src1.at<uchar>(i, j)]++;
+		}
+	}
+}
+
+void matchmap(Mat src, int *num, float *dstcol)
+{
+	int sum = 0;
+	for (int i = 0; i < 256; i++)
+	{
+		sum = sum + num[i];
+		dstcol[i] = sum * 255 / (src.rows*src.cols);
+	}
+}
+
+void result(Mat dst,Mat change,int *map)
+{
+	for (int i = 0; i < dst.rows; i++)
+	{
+		for (int j = 0; j < dst.cols; j++)
+		{
+			dst.at<uchar>(i, j) = map[int(change.at<uchar>(i, j))];
+		}
+	}
+}
+
+void findnearest(float*srccol, float*changcol, int*map)
+{
+	int src[256], change[256], dif[256], match[256] = {0};
+	for (int i = 0; i < 256; i++)
+	{
+		src[i] = round(srccol[i]);
+		change[i] = round(changcol[i]);
+	}
+	for (int i = 0; i < 256; i++)
+	{
+		for (int j = 0; j < 256; j++)
+		{
+			dif[j] = src[j] - change[i];
+		}
+		for (int k = 0; k < 256; k++)
+		{
+			if (abs(match[i])>=abs(dif[k]))
+			{
+				match[i] = dif[k];
+				map[i]=k;
+			}
+		}
+	}
+}
+
+int main()
+{
+	Mat src1 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\citywall.bmp", IMREAD_GRAYSCALE);
+	Mat src2 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain.bmp", IMREAD_GRAYSCALE);
+	Mat src3 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\lena.bmp", IMREAD_GRAYSCALE);
+	Mat src4 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\woman.BMP", IMREAD_GRAYSCALE);
+	Mat change11 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\citywall1.bmp", IMREAD_GRAYSCALE);
+	Mat change12 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\citywall2.bmp", IMREAD_GRAYSCALE);
+	Mat change21 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain1.bmp", IMREAD_GRAYSCALE);
+	Mat change22 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain2.bmp", IMREAD_GRAYSCALE);
+	Mat change23 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain3.bmp", IMREAD_GRAYSCALE);
+	Mat change31 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\lena1.bmp", IMREAD_GRAYSCALE);
+	Mat change32 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\lena2.bmp", IMREAD_GRAYSCALE);
+	Mat change33 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\lena3.bmp", IMREAD_GRAYSCALE);
+	Mat change41 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\woman1.bmp", IMREAD_GRAYSCALE);
+	Mat change42 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\woman2.bmp", IMREAD_GRAYSCALE);
+	Mat dst11(src1.rows, src1.cols, CV_8UC1, Scalar(0, 0, 0));
+	Mat dst12(src1.rows, src1.cols, CV_8UC1, Scalar(0, 0, 0));
+	Mat dst21(src2.rows, src2.cols, CV_8UC1, Scalar(0, 0, 0));
+	Mat dst22(src2.rows, src2.cols, CV_8UC1, Scalar(0, 0, 0));
+	Mat dst23(src2.rows, src2.cols, CV_8UC1, Scalar(0, 0, 0));
+	Mat dst31(src3.rows, src3.cols, CV_8UC1, Scalar(0, 0, 0));
+	Mat dst32(src3.rows, src3.cols, CV_8UC1, Scalar(0, 0, 0));
+	Mat dst33(src3.rows, src3.cols, CV_8UC1, Scalar(0, 0, 0));
+	Mat dst41(src4.rows, src4.cols, CV_8UC1, Scalar(0, 0, 0));
+	Mat dst42(src4.rows, src4.cols, CV_8UC1, Scalar(0, 0, 0));
+	float srccol11[256], changecol11[256];
+	float srccol12[256], changecol12[256];
+	float srccol21[256], changecol21[256];
+	float srccol22[256], changecol22[256];
+	float srccol23[256], changecol23[256];
+	float srccol31[256], changecol31[256];
+	float srccol32[256], changecol32[256];
+	float srccol33[256], changecol33[256];
+	float srccol41[256], changecol41[256];
+	float srccol42[256], changecol42[256];
+	int srcnum1[256];
+	int srcnum2[256];
+	int srcnum3[256];
+	int srcnum4[256];
+	int changenum11[256];
+	int changenum12[256];
+	int changenum21[256];
+	int changenum22[256];
+	int changenum23[256];
+	int changenum31[256];
+	int changenum32[256];
+	int changenum33[256];
+	int changenum41[256];
+	int changenum42[256];
+	int map11[256];
+	int map12[256];
+	int map21[256];
+	int map22[256];
+	int map23[256];
+	int map31[256];
+	int map32[256];
+	int map33[256];
+	int map41[256];
+	int map42[256];
+	countnumber(src1, srcnum1);
+	countnumber(src2, srcnum2);
+	countnumber(src3, srcnum3);
+	countnumber(src4, srcnum4);
+	countnumber(change11, changenum11);
+	countnumber(change12, changenum12);
+	countnumber(change21, changenum21);
+	countnumber(change22, changenum22);
+	countnumber(change23, changenum23);
+	countnumber(change31, changenum31);
+	countnumber(change32, changenum32);
+	countnumber(change33, changenum33);
+	countnumber(change41, changenum41);
+	countnumber(change42, changenum42);
+	matchmap(src1, srcnum1, srccol11);
+	matchmap(src1, srcnum1, srccol12);
+	matchmap(src2, srcnum2, srccol21);
+	matchmap(src2, srcnum2, srccol22);
+	matchmap(src2, srcnum2, srccol23);
+	matchmap(src3, srcnum3, srccol31);
+	matchmap(src3, srcnum3, srccol32);
+	matchmap(src3, srcnum3, srccol33);
+	matchmap(src4, srcnum4, srccol41);
+	matchmap(src4, srcnum4, srccol42);
+	matchmap(change11, changenum11, changecol11);
+	matchmap(change12, changenum12, changecol12);
+	matchmap(change21, changenum21, changecol21);
+	matchmap(change22, changenum22, changecol22);
+	matchmap(change23, changenum23, changecol23);
+	matchmap(change31, changenum31, changecol31);
+	matchmap(change32, changenum32, changecol32);
+	matchmap(change33, changenum33, changecol33);
+	matchmap(change41, changenum41, changecol41);
+	matchmap(change42, changenum42, changecol42);
+	findnearest(srccol11, changecol11, map11);
+	findnearest(srccol12, changecol12, map12);
+	findnearest(srccol21, changecol21, map21);
+	findnearest(srccol22, changecol22, map22);
+	findnearest(srccol23, changecol23, map23);
+	findnearest(srccol31, changecol31, map31);
+	findnearest(srccol32, changecol32, map32);
+	findnearest(srccol33, changecol33, map33);
+	findnearest(srccol41, changecol41, map41);
+	findnearest(srccol42, changecol42, map42);
+	result(dst11, change11, map11);
+	result(dst12, change12, map12);
+	result(dst21, change21, map21);
+	result(dst22, change22, map22);
+	result(dst23, change23, map23);
+	result(dst31, change31, map31);
+	result(dst32, change32, map32);
+	result(dst33, change33, map33);
+	result(dst41, change41, map41);
+	result(dst42, change42, map42);
+	imshow("result1", dst11);
+	imshow("result2", dst12);
+	imshow("result3", dst21);
+	imshow("result4", dst22);
+	imshow("result5", dst23);
+	imshow("result6", dst31);
+	imshow("result7", dst32);
+	imshow("result8", dst33);
+	imshow("result9", dst41);
+	imshow("result10", dst42);
+
+
+	
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\3\\citywall1.bmp", dst11);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\3\\citywall2.bmp", dst12);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\3\\elain1.bmp", dst21);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\3\\elain2.bmp", dst22);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\3\\elain3.bmp", dst23);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\3\\lena1.bmp", dst31);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\3\\lena2.bmp", dst32);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\3\\lena3.bmp", dst33);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\3\\woman1.bmp", dst41);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\3\\woman2.bmp", dst42);
+	waitKey(0);
+	return 0;
+}*/
+
+
+
+//2
+/*int main()
+{
+	Mat src1 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\citywall.bmp", IMREAD_GRAYSCALE);
+	Mat src2 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\citywall1.bmp", IMREAD_GRAYSCALE);
+	Mat src3 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\citywall2.bmp", IMREAD_GRAYSCALE);
+	Mat src4 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain.bmp", IMREAD_GRAYSCALE);
+	Mat src5 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain1.bmp", IMREAD_GRAYSCALE);
+	Mat src6 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain2.bmp", IMREAD_GRAYSCALE);
+	Mat src7 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain3.bmp", IMREAD_GRAYSCALE);
+	Mat src8 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\lena.bmp", IMREAD_GRAYSCALE);
+	Mat src9 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\lena1.bmp", IMREAD_GRAYSCALE);
+	Mat src10 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\lena2.bmp", IMREAD_GRAYSCALE);
+	Mat src11 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\lena3.bmp", IMREAD_GRAYSCALE);
+	Mat src12 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\woman.BMP", IMREAD_GRAYSCALE);
+	Mat src13 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\woman1.bmp", IMREAD_GRAYSCALE);
+	Mat src14 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\woman2.bmp", IMREAD_GRAYSCALE);
+	Mat heqresult1, heqresult2, heqresult3, heqresult4, heqresult5, heqresult6, heqresult7, heqresult8, heqresult9, heqresult10, heqresult11, heqresult12, heqresult13, heqresult14;
+	equalizeHist(src1, heqresult1);
+	equalizeHist(src2, heqresult2);
+	equalizeHist(src3, heqresult3);
+	equalizeHist(src4, heqresult4);
+	equalizeHist(src5, heqresult5);
+	equalizeHist(src6, heqresult6);
+	equalizeHist(src7, heqresult7);
+	equalizeHist(src8, heqresult8);
+	equalizeHist(src9, heqresult9);
+	equalizeHist(src10, heqresult10);
+	equalizeHist(src11, heqresult11);
+	equalizeHist(src12, heqresult12);
+	equalizeHist(src13, heqresult13);
+	equalizeHist(src14, heqresult14);
+	MatND hist1, hist2, hist3, hist4, hist5, hist6, hist7, hist8, hist9, hist10, hist11, hist12, hist13, hist14;
+	int channel[1] = { 0 };
+	int dims = 1;
+	int histsize[1] = { 256 };
+	float range[2] = { 0, 256 };
+	const float *ranges[1] = { range };
+	calcHist(&heqresult1, 1, 0, Mat(), hist1, dims, histsize, ranges);
+	calcHist(&heqresult2, 1, 0, Mat(), hist2, dims, histsize, ranges);
+	calcHist(&heqresult3, 1, 0, Mat(), hist3, dims, histsize, ranges);
+	calcHist(&heqresult4, 1, 0, Mat(), hist4, dims, histsize, ranges);
+	calcHist(&heqresult5, 1, 0, Mat(), hist5, dims, histsize, ranges);
+	calcHist(&heqresult6, 1, 0, Mat(), hist6, dims, histsize, ranges);
+	calcHist(&heqresult7, 1, 0, Mat(), hist7, dims, histsize, ranges);
+	calcHist(&heqresult8, 1, 0, Mat(), hist8, dims, histsize, ranges);
+	calcHist(&heqresult9, 1, 0, Mat(), hist9, dims, histsize, ranges);
+	calcHist(&heqresult10, 1, 0, Mat(), hist10, dims, histsize, ranges);
+	calcHist(&heqresult11, 1, 0, Mat(), hist11, dims, histsize, ranges);
+	calcHist(&heqresult12, 1, 0, Mat(), hist12, dims, histsize, ranges);
+	calcHist(&heqresult13, 1, 0, Mat(), hist13, dims, histsize, ranges);
+	calcHist(&heqresult14, 1, 0, Mat(), hist14, dims, histsize, ranges);
+
+	int histw = 400;
+	int histh = 400;
+	int nhistsize = 255;
+	int binw = cvRound((double)histw / nhistsize);
+	Mat histImage1(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage2(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage3(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage4(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage5(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage6(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage7(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage8(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage9(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage10(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage11(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage12(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage13(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage14(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	normalize(hist1, hist1, 0, histImage1.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist2, hist2, 0, histImage2.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist3, hist3, 0, histImage3.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist4, hist4, 0, histImage4.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist5, hist5, 0, histImage5.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist6, hist6, 0, histImage6.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist7, hist7, 0, histImage7.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist8, hist8, 0, histImage8.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist9, hist9, 0, histImage9.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist10, hist10, 0, histImage10.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist11, hist11, 0, histImage11.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist12, hist12, 0, histImage12.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist13, hist13, 0, histImage13.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist14, hist14, 0, histImage14.rows, NORM_MINMAX, -1, Mat());
+	for (int i = 1; i < nhistsize; i++)
+	{
+		line(histImage1, Point(binw*(i - 1), histh - cvRound(hist1.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist1.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage2, Point(binw*(i - 1), histh - cvRound(hist2.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist2.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage3, Point(binw*(i - 1), histh - cvRound(hist3.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist3.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage4, Point(binw*(i - 1), histh - cvRound(hist4.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist4.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage5, Point(binw*(i - 1), histh - cvRound(hist5.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist5.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage6, Point(binw*(i - 1), histh - cvRound(hist6.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist6.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage7, Point(binw*(i - 1), histh - cvRound(hist7.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist7.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage8, Point(binw*(i - 1), histh - cvRound(hist8.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist8.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage9, Point(binw*(i - 1), histh - cvRound(hist9.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist9.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage10, Point(binw*(i - 1), histh - cvRound(hist10.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist10.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage11, Point(binw*(i - 1), histh - cvRound(hist11.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist11.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage12, Point(binw*(i - 1), histh - cvRound(hist12.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist12.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage13, Point(binw*(i - 1), histh - cvRound(hist13.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist13.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage14, Point(binw*(i - 1), histh - cvRound(hist14.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist14.at<float>(i))), Scalar(0, 0, 255), 1);
+	}
+	imshow("histogram1", histImage1);
+	imshow("histogram2", histImage2);
+	imshow("histogram3", histImage3);
+	imshow("histogram4", histImage4);
+	imshow("histogram5", histImage5);
+	imshow("histogram6", histImage6);
+	imshow("histogram7", histImage7);
+	imshow("histogram8", histImage8);
+	imshow("histogram9", histImage9);
+	imshow("histogram10", histImage10);
+	imshow("histogram11", histImage11);
+	imshow("histogram12", histImage12);
+	imshow("histogram13", histImage13);
+	imshow("histogram14", histImage14);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\citywall.bmp", histImage1);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\citywall1.bmp", histImage2);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\citywall2.bmp", histImage3);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\elain.bmp", histImage4);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\elain1.bmp", histImage5);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\elain2.bmp", histImage6);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\elain3.bmp", histImage7);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\lena.bmp", histImage8);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\lena1.bmp", histImage9);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\lena2.bmp", histImage10);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\lena3.bmp", histImage11);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\woman.bmp", histImage12);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\woman1.bmp", histImage13);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\2\\woman2.bmp", histImage14);
+	waitKey();
+	return 0;
+}*/
+
+//1
+int main()
+{
+	Mat src1 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\citywall.bmp", IMREAD_GRAYSCALE);
+	Mat src2 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\citywall1.bmp", IMREAD_GRAYSCALE);
+	Mat src3 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\citywall2.bmp", IMREAD_GRAYSCALE);
+	Mat src4 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain.bmp", IMREAD_GRAYSCALE);
+	Mat src5 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain1.bmp", IMREAD_GRAYSCALE);
+	Mat src6 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain2.bmp", IMREAD_GRAYSCALE);
+	Mat src7 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\elain3.bmp", IMREAD_GRAYSCALE);
+	Mat src8 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\lena.bmp", IMREAD_GRAYSCALE);
+	Mat src9 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\lena1.bmp", IMREAD_GRAYSCALE);
+	Mat src10 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\lena2.bmp", IMREAD_GRAYSCALE);
+	Mat src11 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\lena3.bmp", IMREAD_GRAYSCALE);
+	Mat src12 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\woman.BMP", IMREAD_GRAYSCALE);
+	Mat src13 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\woman1.bmp", IMREAD_GRAYSCALE);
+	Mat src14 = imread("E:\\课件\\图像\\第三次作业\\第3-次作业\\woman2.bmp", IMREAD_GRAYSCALE);
+	MatND hist1,hist2,hist3,hist4,hist5,hist6,hist7,hist8,hist9,hist10,hist11,hist12,hist13,hist14;
+	int channel[1] = { 0 };
+	int dims = 1;
+	int histsize[1] = { 256 };
+	float range[2] = { 0, 256 };
+	const float *ranges[1] = { range };
+	calcHist(&src1, 1, 0, Mat(), hist1, dims, histsize, ranges);
+	calcHist(&src2, 1, 0, Mat(), hist2, dims, histsize, ranges);
+	calcHist(&src3, 1, 0, Mat(), hist3, dims, histsize, ranges);
+	calcHist(&src4, 1, 0, Mat(), hist4, dims, histsize, ranges);
+	calcHist(&src5, 1, 0, Mat(), hist5, dims, histsize, ranges);
+	calcHist(&src6, 1, 0, Mat(), hist6, dims, histsize, ranges);
+	calcHist(&src7, 1, 0, Mat(), hist7, dims, histsize, ranges);
+	calcHist(&src8, 1, 0, Mat(), hist8, dims, histsize, ranges);
+	calcHist(&src9, 1, 0, Mat(), hist9, dims, histsize, ranges);
+	calcHist(&src10, 1, 0, Mat(), hist10, dims, histsize, ranges);
+	calcHist(&src11, 1, 0, Mat(), hist11, dims, histsize, ranges);
+	calcHist(&src12, 1, 0, Mat(), hist12, dims, histsize, ranges);
+	calcHist(&src13, 1, 0, Mat(), hist13, dims, histsize, ranges);
+	calcHist(&src14, 1, 0, Mat(), hist14, dims, histsize, ranges);
+
+	int histw = 400;
+	int histh = 400;
+	int nhistsize = 255;
+	int binw = cvRound((double)histw / nhistsize);
+	Mat histImage1(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage2(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage3(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage4(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage5(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage6(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage7(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage8(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage9(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage10(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage11(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage12(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage13(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	Mat histImage14(histw, histh, CV_8UC3, Scalar(255, 255, 255));
+	normalize(hist1, hist1, 0, histImage1.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist2, hist2, 0, histImage2.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist3, hist3, 0, histImage3.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist4, hist4, 0, histImage4.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist5, hist5, 0, histImage5.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist6, hist6, 0, histImage6.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist7, hist7, 0, histImage7.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist8, hist8, 0, histImage8.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist9, hist9, 0, histImage9.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist10, hist10, 0, histImage10.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist11, hist11, 0, histImage11.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist12, hist12, 0, histImage12.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist13, hist13, 0, histImage13.rows, NORM_MINMAX, -1, Mat());
+	normalize(hist14, hist14, 0, histImage14.rows, NORM_MINMAX, -1, Mat());
+	for (int i = 1; i < nhistsize; i++)
+	{
+		line(histImage1, Point(binw*(i - 1), histh - cvRound(hist1.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist1.at<float>(i))), Scalar(0, 0, 255),1);
+		line(histImage2, Point(binw*(i - 1), histh - cvRound(hist2.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist2.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage3, Point(binw*(i - 1), histh - cvRound(hist3.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist3.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage4, Point(binw*(i - 1), histh - cvRound(hist4.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist4.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage5, Point(binw*(i - 1), histh - cvRound(hist5.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist5.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage6, Point(binw*(i - 1), histh - cvRound(hist6.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist6.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage7, Point(binw*(i - 1), histh - cvRound(hist7.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist7.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage8, Point(binw*(i - 1), histh - cvRound(hist8.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist8.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage9, Point(binw*(i - 1), histh - cvRound(hist9.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist9.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage10, Point(binw*(i - 1), histh - cvRound(hist10.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist10.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage11, Point(binw*(i - 1), histh - cvRound(hist11.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist11.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage12, Point(binw*(i - 1), histh - cvRound(hist12.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist12.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage13, Point(binw*(i - 1), histh - cvRound(hist13.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist13.at<float>(i))), Scalar(0, 0, 255), 1);
+		line(histImage14, Point(binw*(i - 1), histh - cvRound(hist14.at<float>(i - 1))), Point(binw*(i), histh - cvRound(hist14.at<float>(i))), Scalar(0, 0, 255), 1);
+	}
+	imshow("histogram1", histImage1);
+	imshow("histogram2", histImage2);
+	imshow("histogram3", histImage3);
+	imshow("histogram4", histImage4);
+	imshow("histogram5", histImage5);
+	imshow("histogram6", histImage6);
+	imshow("histogram7", histImage7);
+	imshow("histogram8", histImage8);
+	imshow("histogram9", histImage9);
+	imshow("histogram10", histImage10);
+	imshow("histogram11", histImage11);
+	imshow("histogram12", histImage12);
+	imshow("histogram13", histImage13);
+	imshow("histogram14", histImage14);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\citywall.bmp", histImage1);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\citywall1.bmp", histImage2);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\citywall2.bmp", histImage3);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\elain.bmp", histImage4);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\elain1.bmp", histImage5);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\elain2.bmp", histImage6);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\elain3.bmp", histImage7);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\lena.bmp", histImage8);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\lena1.bmp", histImage9);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\lena2.bmp", histImage10);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\lena3.bmp", histImage11);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\woman.bmp", histImage12);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\woman1.bmp", histImage13);
+	imwrite("E:\\课件\\图像\\第三次作业\\第3-次作业\\结果\\1\\woman2.bmp", histImage14);
+	waitKey();
+	return 0;
+}
